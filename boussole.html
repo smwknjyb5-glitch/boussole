@@ -1,0 +1,99 @@
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الجهات الأربع — شمال جنوب شرق غرب</title>
+<style>
+:root{--bg:#0b1535;--card:#13224f;--gold:#e8c468;--txt:#f3efe2;--mut:#a9b3d1;--red:#e5534b}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#1b2f6b,var(--bg) 70%);color:var(--txt);font-family:"Segoe UI",Tahoma,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:18px 14px 30px}
+h1{margin:6px 0 4px;font-size:1.5rem;color:var(--gold)}
+p.sub{margin:0 0 14px;color:var(--mut);font-size:.95rem;text-align:center}
+.compass{position:relative;width:min(86vw,340px);aspect-ratio:1;margin:8px 0}
+.dial{position:absolute;inset:0;border-radius:50%;border:4px solid var(--gold);background:var(--card);box-shadow:0 0 30px #0008 inset,0 6px 24px #0007;transition:transform .15s linear}
+.dial span{position:absolute;font-weight:700;font-size:1.25rem}
+.dial .n{top:8px;left:50%;transform:translateX(-50%);color:var(--red);font-size:1.5rem}
+.dial .s{bottom:8px;left:50%;transform:translateX(-50%)}
+.dial .e{left:12px;top:50%;transform:translateY(-50%)}
+.dial .w{right:12px;top:50%;transform:translateY(-50%)}
+.dial i{position:absolute;left:50%;top:50%;width:2px;height:46%;background:#ffffff30;transform-origin:top center}
+.needle{position:absolute;left:50%;top:50%;width:0;height:0;transform:translate(-50%,-50%)}
+.needle:before{content:"";position:absolute;left:-9px;bottom:0;border:9px solid transparent;border-bottom:70px solid var(--red);border-top:0;transform:translateY(0)}
+.fixed{position:absolute;left:50%;top:-6px;transform:translateX(-50%);color:var(--gold);font-size:1.3rem}
+.hub{position:absolute;left:50%;top:50%;width:16px;height:16px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%)}
+.read{margin:14px 0 6px;font-size:2rem;font-weight:700;color:var(--gold)}
+.deg{color:var(--mut);margin-bottom:12px}
+button{background:var(--gold);color:#1b1b1b;border:0;border-radius:12px;padding:12px 22px;font-size:1.05rem;font-weight:700;font-family:inherit}
+.demo{width:min(86vw,340px);margin-top:12px;display:none;text-align:center;color:var(--mut)}
+.demo input{width:100%}
+.msg{color:var(--mut);margin:8px 0;text-align:center;font-size:.92rem;max-width:420px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(92vw,420px);margin-top:18px}
+.grid div{background:var(--card);border:1px solid #ffffff1c;border-radius:12px;padding:10px 12px;font-size:.92rem;line-height:1.6}
+.grid b{color:var(--gold);display:block}
+</style>
+</head>
+<body>
+<h1>🧭 الجهات الأربع</h1>
+<p class="sub">ضع الهاتف أفقيًا (مسطّحًا) ثم اضغط «تشغيل البوصلة»</p>
+
+<div class="compass">
+  <div class="dial" id="dial">
+    <span class="n">شمال</span><span class="s">جنوب</span><span class="e">شرق</span><span class="w">غرب</span>
+  </div>
+  <div class="fixed">▼</div>
+  <div class="hub"></div>
+</div>
+
+<div class="read" id="read">—</div>
+<div class="deg" id="deg">الاتجاه: —</div>
+<button id="start">تشغيل البوصلة</button>
+<div class="msg" id="msg"></div>
+<div class="demo" id="demo">لا يوجد حسّاس اتجاه في هذا الجهاز — جرّب يدويًا:<input type="range" min="0" max="359" value="0" id="slider"></div>
+
+<div class="grid">
+  <div><b>شمال (N)</b>الجهة التي يشير إليها طرف الإبرة الأحمر — 0°</div>
+  <div><b>جنوب (S)</b>عكس الشمال تمامًا — 180°</div>
+  <div><b>شرق (E)</b>على يمينك إذا واجهت الشمال، ومنها تشرق الشمس — 90°</div>
+  <div><b>غرب (W)</b>على يسارك إذا واجهت الشمال، وفيها تغرب الشمس — 270°</div>
+</div>
+
+<script>
+const dial=document.getElementById('dial'),read=document.getElementById('read'),
+deg=document.getElementById('deg'),msg=document.getElementById('msg'),
+demo=document.getElementById('demo'),slider=document.getElementById('slider');
+for(let a=0;a<360;a+=15){const t=document.createElement('i');t.style.transform='rotate('+a+'deg)';t.style.height=(a%90===0?'0':'3%');t.style.marginTop='-2px';dial.appendChild(t);}
+const names=['شمال','شمال شرق','شرق','جنوب شرق','جنوب','جنوب غرب','غرب','شمال غرب'];
+function show(h){
+  h=((h%360)+360)%360;
+  dial.style.transform='rotate('+(-h)+'deg)';
+  read.textContent=names[Math.round(h/45)%8];
+  deg.textContent='الاتجاه: '+Math.round(h)+'° (الأمام نحو '+names[Math.round(h/45)%8]+')';
+}
+let got=false;
+function onOri(e){
+  let h=null;
+  if(typeof e.webkitCompassHeading==='number')h=e.webkitCompassHeading;
+  else if(e.alpha!==null&&e.alpha!==undefined&&(e.absolute||e.type==='deviceorientationabsolute'))h=360-e.alpha;
+  if(h!==null){got=true;show(h);}
+}
+function listen(){
+  window.addEventListener('deviceorientationabsolute',onOri,true);
+  window.addEventListener('deviceorientation',onOri,true);
+  setTimeout(()=>{if(!got){msg.textContent='لم يصل أي قياس. تأكد من السماح بالوصول إلى الحسّاسات وفتح الصفحة عبر https، أو استعمل الوضع اليدوي.';demo.style.display='block';}},2500);
+}
+document.getElementById('start').onclick=async()=>{
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+      const r=await DeviceOrientationEvent.requestPermission();
+      if(r!=='granted'){msg.textContent='تم رفض الإذن.';demo.style.display='block';return;}
+    }
+    msg.textContent='حرّك الهاتف قليلًا على شكل رقم 8 لمعايرة الحسّاس.';
+    listen();
+  }catch(err){msg.textContent='تعذّر تشغيل الحسّاس.';demo.style.display='block';}
+};
+slider.oninput=()=>show(+slider.value);
+show(0);
+</script>
+</body>
+</html>
